@@ -3,7 +3,9 @@ package main
 import (
 	"embed"
 
+	db "ain.com/database"
 	"github.com/wailsapp/wails/v2"
+	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 )
@@ -27,7 +29,11 @@ func main() {
 		OnStartup:        app.startup,
 		Bind: []interface{}{
 			app,
+			&db.Dir{},
+			&db.PDFMetadata{},
 		},
+		LogLevel:   logger.TRACE,
+		OnShutdown: app.shutdown,
 	})
 
 	if err != nil {

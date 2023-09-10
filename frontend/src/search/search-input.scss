@@ -1,12 +1,12 @@
 $input-height: 44px;
-$input-width: 100vh;
+$input-width: 100vw;
 
 .search-input {
   height: 100%;
   position: relative;
   max-width: $input-width;
 
-  .search-input-grp {
+  .rs-search-input-grp {
     height: $input-height;
   }
 

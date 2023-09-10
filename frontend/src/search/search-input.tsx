@@ -14,7 +14,7 @@ function SearchInput() {
   return (
     <>
       <div className="search-input">
-        <InputGroup inside className="search-input-grp">
+        <InputGroup inside classPrefix="search-input-grp">
           <SearchIcon
             className="search-icon"
             style={iconStyle}

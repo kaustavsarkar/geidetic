@@ -10,9 +10,11 @@
   align-items: center;
   justify-content: center;
 
-  .logo-container {
-    padding-left: 10%;
+  .search-box {
+    width: 500px;
+  }
 
+  .logo-container {
     .logo {
       white-space: nowrap;
       font-weight: bolder;
@@ -24,5 +26,10 @@
   .input-container {
     text-align: -webkit-center;
     height: 51px;
+  }
+
+  .button-container {
+    justify-content: center;
+    display: -webkit-flex;
   }
 }
