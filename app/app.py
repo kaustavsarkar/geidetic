@@ -5,7 +5,7 @@ from frames.explorer.explorer import Explorer
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry("600x500")
+        self.geometry("2100x1800")
         self.title("Ain - Legal AI")
 
         self.grid_rowconfigure(1, weight=2)  # configure grid system
