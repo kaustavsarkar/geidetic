@@ -1,6 +1,6 @@
 import customtkinter
 from frames.explorer.explorer import Explorer
-
+import subprocess
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -10,7 +10,8 @@ class App(customtkinter.CTk):
 
         self.grid_rowconfigure(1, weight=2)  # configure grid system
         self.grid_columnconfigure(1, weight=2)
-
+        subprocess.run(['python', './app/search_engine.py'])
+    
 
     def launch_explorer(self):
         self.explorer_frame = Explorer(master=self)
