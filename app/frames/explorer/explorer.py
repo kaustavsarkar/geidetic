@@ -11,6 +11,7 @@ from db.db_operation import insert_file_mapping
 from db.db_operation import get_file_path
 import fitz
 import os
+import re
 
 class Explorer(customtkinter.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -50,13 +51,15 @@ class Explorer(customtkinter.CTkFrame):
                 pdf_document = fitz.Document(file_path)
                 pdf_name = pdf_document.name
                 pdf_name = os.path.splitext(os.path.basename(file_path))[0]
+                pdf_name = re.sub(r'[^a-zA-Z0-9\s]', '', pdf_name)
                 pdf_name = pdf_name.replace(' ','_')
                 insert_file_mapping(file_name=pdf_name,file_path=pdf_document.name)
                 for i in range(len(pdf_document)):
                     page = pdf_document.load_page(i)
                     pdf_text = page.get_text("text")
-                    text_file_name = str(i) + '_' + pdf_name + '.txt'
+                    text_file_name = str(i) + '#' + pdf_name + '.txt'
                     save_to_text_file(pdf_text, text_file_name )
+                    
                     
 
     def list_pdfs(self):
@@ -77,11 +80,11 @@ class Explorer(customtkinter.CTkFrame):
             results = searcher.search(query)
             for hit in results:
                 file_name = hit['path']
-                file_name = file_name.split('\\')[1]
+                file_name = os.path.splitext(os.path.basename(file_name))[0]
                 file_name = file_name.split('.')[0]
-                modified_file_name = file_name.split('_')
+                modified_file_name = file_name.split('#')
                 page_no = int(modified_file_name[0])
-                file_name = file_name[len(modified_file_name[0])+1:len(file_name)]
+                file_name = modified_file_name[1]
                 file_path = get_file_path(file_name)
                 self.open_pdf_viewer(file_path,page_no)
 
