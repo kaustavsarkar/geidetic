@@ -20,7 +20,7 @@ text_files_dir = "pdf_extracted_data"
 for root, dirs, files in os.walk(text_files_dir):
     for file in files:
         if file.endswith(".txt"):
-            with open(os.path.join(root, file), "r", encoding="utf-8") as f:
+            with open(os.path.join(root, file), "r") as f:
                 content = f.read()
             writer.add_document(path=os.path.join(root, file), content=content)
 

@@ -1,7 +1,7 @@
 import customtkinter
 from frames.explorer.explorer import Explorer
 import subprocess
-
+from db.db_operation import create_table
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
@@ -11,6 +11,7 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure(1, weight=2)  # configure grid system
         self.grid_columnconfigure(1, weight=2)
         subprocess.run(['python', './app/search_engine.py'])
+        create_table()
     
 
     def launch_explorer(self):

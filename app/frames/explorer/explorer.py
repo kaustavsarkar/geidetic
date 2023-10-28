@@ -1,9 +1,16 @@
 import customtkinter
+# import pdftotext
 from tkinter import filedialog
+from PIL import Image
+from PIL import ImageTk
 from fileio.reader import find_pdfs_in
-
+from fileio.reader import save_to_text_file
 from whoosh.qparser import QueryParser
 from whoosh.index import open_dir
+from db.db_operation import insert_file_mapping
+from db.db_operation import get_file_path
+import fitz
+import os
 
 class Explorer(customtkinter.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -29,9 +36,6 @@ class Explorer(customtkinter.CTkFrame):
         self.search_button = customtkinter.CTkButton(self, text="Search",command=self.perform_search)
         self.search_button.grid(row=2, column=1, padx=10, pady=10)
 
-        # Create a text box to display search results
-        self.result_text = customtkinter.CTkTextbox(self, wrap=customtkinter.WORD, width=100, height=100)
-        self.result_text.grid(row=3, column=0, padx=10, pady=10,columnspan=2,sticky='ew')
 
 
     def browse(self):
@@ -40,11 +44,27 @@ class Explorer(customtkinter.CTkFrame):
             self.selected_dir = folder_path
         return
     
+    def open_pdf(self,pdf_paths):
+        for file_path in pdf_paths:
+            if file_path:
+                pdf_document = fitz.Document(file_path)
+                pdf_name = pdf_document.name
+                pdf_name = os.path.splitext(os.path.basename(file_path))[0]
+                pdf_name = pdf_name.replace(' ','_')
+                insert_file_mapping(file_name=pdf_name,file_path=pdf_document.name)
+                for i in range(len(pdf_document)):
+                    page = pdf_document.load_page(i)
+                    pdf_text = page.get_text("text")
+                    text_file_name = str(i) + '_' + pdf_name + '.txt'
+                    save_to_text_file(pdf_text, text_file_name )
+                    
 
     def list_pdfs(self):
         pdf_paths = find_pdfs_in(self.selected_dir)
         for path in pdf_paths:
             self.textbox.insert("end", path + "\n")
+        self.open_pdf(pdf_paths)
+
     def button_click2(self):
         print("button click")
         return
@@ -55,9 +75,38 @@ class Explorer(customtkinter.CTkFrame):
         with ix.searcher() as searcher:
             query = QueryParser("content", ix.schema).parse(query_text)
             results = searcher.search(query)
-            self.result_text.delete(1.0, customtkinter.END)  # Clear previous results
             for hit in results:
-                self.result_text.insert(customtkinter.END, hit['path'] + "\n")
-                # Check if results is empty and display a message if it is
-            if len(results) == 0:
-                self.result_text.insert(customtkinter.END, "No results found\n")
+                file_name = hit['path']
+                file_name = file_name.split('\\')[1]
+                file_name = file_name.split('.')[0]
+                modified_file_name = file_name.split('_')
+                page_no = int(modified_file_name[0])
+                file_name = file_name[len(modified_file_name[0])+1:len(file_name)]
+                file_path = get_file_path(file_name)
+                self.open_pdf_viewer(file_path,page_no)
+
+
+    def open_pdf_viewer(self,pdf_file, page_no):
+        doc = fitz.Document(pdf_file)
+        
+
+        pdf_page = doc.load_page(page_no)
+        pdf_image = pdf_page.get_pixmap()
+
+        pil_image = Image.frombytes("RGB", [pdf_image.width, pdf_image.height], pdf_image.samples)
+        photo = ImageTk.PhotoImage(pil_image)
+        # Create a Canvas for scrolling
+        canvas = customtkinter.CTkCanvas(self)
+        canvas.grid(sticky='ew')
+
+        # Create a Frame to hold the Label
+        frame = customtkinter.CTkFrame(canvas)
+        canvas.create_window((0, 0), window=frame, anchor=customtkinter.NW)
+
+        label = customtkinter.CTkLabel(frame, image=photo)
+        label.grid()
+
+        # Add a scrollbar for the Canvas
+        scrollbar = customtkinter.CTkScrollbar(self, orientation=customtkinter.VERTICAL)
+        scrollbar.grid(sticky='ew')
+        canvas.config(yscrollcommand=scrollbar.set)
