@@ -3,4 +3,4 @@ darkdetect==0.8.0
 packaging==23.2
 whoosh==2.7.4
 PyMuPDFb==1.23.5
-Pillow=10.1.0
+Pillow==10.1.0
