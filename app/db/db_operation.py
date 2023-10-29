@@ -1,3 +1,4 @@
+from typing import Optional
 import sqlite3
 
 # Create a new SQLite database (or connect to an existing one)
@@ -27,7 +28,7 @@ def insert_file_mapping(file_name, file_path):
     conn.commit()
     conn.close()
 
-def get_file_path(file_name):
+def get_file_path(file_name) -> Optional[str]:
     conn = sqlite3.connect('file_mapping.db')
     cursor = conn.cursor()
 

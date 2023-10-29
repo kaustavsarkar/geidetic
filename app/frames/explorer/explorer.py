@@ -1,14 +1,11 @@
 import customtkinter
 # import pdftotext
 from tkinter import filedialog
-from PIL import Image
-from PIL import ImageTk
-from fileio.reader import find_pdfs_in
-from fileio.reader import save_to_text_file
+from PIL import Image, ImageTk
+from fileio.reader import find_pdfs_in, save_to_text_file
 from whoosh.qparser import QueryParser
 from whoosh.index import open_dir
-from db.db_operation import insert_file_mapping
-from db.db_operation import get_file_path
+from db.db_operation import insert_file_mapping, get_file_path
 import fitz
 import os
 import re
@@ -86,18 +83,25 @@ class Explorer(customtkinter.CTkFrame):
                 page_no = int(modified_file_name[0])
                 file_name = modified_file_name[1]
                 file_path = get_file_path(file_name)
+
+                if file_path == None:
+                    return
+
                 self.open_pdf_viewer(file_path,page_no)
 
 
-    def open_pdf_viewer(self,pdf_file, page_no):
+    def open_pdf_viewer(self,pdf_file: str, page_no: int):
         doc = fitz.Document(pdf_file)
         
 
-        pdf_page = doc.load_page(page_no)
-        pdf_image = pdf_page.get_pixmap()
+        pdf_page: fitz.Page = doc.load_page(page_no)
+        pdf_image: fitz.Pixmap = pdf_page.get_pixmap() # type: ignore
+        image_width = int(pdf_image.width)
+        image_height = int(pdf_image.height)
 
-        pil_image = Image.frombytes("RGB", [pdf_image.width, pdf_image.height], pdf_image.samples)
-        photo = ImageTk.PhotoImage(pil_image)
+        pil_image = Image.frombytes("RGB",(image_width, image_height), pdf_image.samples)
+        # photo = ImageTk.PhotoImage(pil_image)
+        ctkImage = customtkinter.CTkImage(light_image=pil_image, size=(400,600))
         # Create a Canvas for scrolling
         canvas = customtkinter.CTkCanvas(self)
         canvas.grid(sticky='ew')
@@ -106,7 +110,7 @@ class Explorer(customtkinter.CTkFrame):
         frame = customtkinter.CTkFrame(canvas)
         canvas.create_window((0, 0), window=frame, anchor=customtkinter.NW)
 
-        label = customtkinter.CTkLabel(frame, image=photo)
+        label = customtkinter.CTkLabel(frame, image=ctkImage)
         label.grid()
 
         # Add a scrollbar for the Canvas
