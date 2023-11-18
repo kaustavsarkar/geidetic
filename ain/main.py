@@ -1,7 +1,9 @@
-from app import App
+"""Main class to launch the application."""
+from ain.app import App
 
 
 def launch():
+    """Launches Tkinter App."""
     app = App()
     app.launch_explorer()
     app.mainloop()

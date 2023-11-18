@@ -10,10 +10,16 @@ they are done.
 
 import multiprocessing
 from multiprocessing import Pool
+from multiprocessing.pool import IMapIterator
+from typing import Iterable, Callable, List
+from watchdog.observers.api import BaseObserver
+
+from ain import search_engine
 
 
 def pool_init():
     """Called while initialising Process Pool"""
+    search_engine.init_engine()
     print("Process Pool initialised")
 
 
@@ -41,13 +47,22 @@ class ProcessManager:
 
     def __init__(self) -> None:
         self._cpu_num = multiprocessing.cpu_count()
-        self._process_pool = Pool(
-            processes=self._cpu_num, initializer=pool_init)
+        # pool contains one less process since one process shall be dedicated
+        # to indexing.
+        self._process_pool = Pool(processes=self._cpu_num - 1)
+        pool_init()
+        self._results: List[IMapIterator] = []
 
-    def start_async(self) -> None:
+    def start_engine(self) -> BaseObserver:
+        """Creates a process to run the search engine."""
+        # index_proc = multiprocessing.Process(target=search_engine.start_engine)
+        # index_proc.start()
+        # return index_proc
+        return search_engine.start_engine()
+
+    def start_async(self, func: Callable, *args: Iterable) -> None:
         """Starts a new async process"""
-        # self._process_pool.imap
-        # pass
+        self._results.append(self._process_pool.imap(func, args))
 
     def close_all(self) -> None:
         """Closes all processes.
@@ -55,5 +70,5 @@ class ProcessManager:
         Before closing processes it waits for the processes to complete.
         """
         # Wait for the job to complete.
-        self._process_pool.join()
         self._process_pool.close()
+        self._process_pool.join()
