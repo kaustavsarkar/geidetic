@@ -27,7 +27,6 @@ class Explorer(customtkinter.CTkFrame):
         super().__init__(master, **kwargs)
 
         self.selected_dir = ''
-        self._pm: ProcessManager
 
         # add widgets to app
         self.button = customtkinter.CTkButton(
