@@ -9,7 +9,7 @@ they are done.
 """
 
 import multiprocessing
-from multiprocessing import Pool
+from multiprocessing import Process
 from multiprocessing.pool import IMapIterator
 from typing import Iterable, Callable, List
 from watchdog.observers.api import BaseObserver
@@ -47,9 +47,7 @@ class ProcessManager:
 
     def __init__(self) -> None:
         self._cpu_num = multiprocessing.cpu_count()
-        # pool contains one less process since one process shall be dedicated
-        # to indexing.
-        self._process_pool = Pool(processes=self._cpu_num - 1)
+        self._processes: List[Process] = []
         pool_init()
         self._results: List[IMapIterator] = []
 
@@ -60,15 +58,8 @@ class ProcessManager:
         # return index_proc
         return search_engine.start_engine()
 
-    def start_async(self, func: Callable, *args: Iterable) -> None:
-        """Starts a new async process"""
-        self._results.append(self._process_pool.imap(func, args))
-
     def close_all(self) -> None:
         """Closes all processes.
 
         Before closing processes it waits for the processes to complete.
         """
-        # Wait for the job to complete.
-        self._process_pool.close()
-        self._process_pool.join()

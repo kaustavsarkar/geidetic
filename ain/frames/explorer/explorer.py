@@ -5,19 +5,15 @@ The Tkinter Frame contains the logic to perform following actions.
 2. Show selected PDFs.
 3. Search PDFs.
 """
-import customtkinter
+import os
 from tkinter import filedialog
+import customtkinter
 from PIL import Image, ImageTk
-from ain.fileio.reader import find_pdfs_in
-from ain.fileio.reader import save_to_text_file
 from whoosh.qparser import QueryParser
 from whoosh.index import open_dir
-from ain.db.db_operation import insert_file_mapping
+from ain.fileio.reader import find_pdfs_in, parse_pdfs
 from ain.db.db_operation import get_file_path
 from ain.pdf_viewer.PDFMiner import PDFMiner
-import fitz
-import os
-import re
 
 
 class Explorer(customtkinter.CTkFrame):
@@ -61,27 +57,11 @@ class Explorer(customtkinter.CTkFrame):
             self.selected_dir = folder_path
         return
 
-    def open_pdf(self, pdf_paths):
-        for file_path in pdf_paths:
-            if file_path:
-                pdf_document = fitz.Document(file_path)
-                pdf_name = pdf_document.name
-                pdf_name = os.path.splitext(os.path.basename(file_path))[0]
-                pdf_name = re.sub(r'[^a-zA-Z0-9\s]', '', pdf_name)
-                pdf_name = pdf_name.replace(' ', '_')
-                insert_file_mapping(file_name=pdf_name,
-                                    file_path=pdf_document.name)
-                for i in range(len(pdf_document)):
-                    page = pdf_document.load_page(i)
-                    pdf_text = page.get_text("text")
-                    text_file_name = str(i) + '#' + pdf_name + '.txt'
-                    save_to_text_file(pdf_text, text_file_name)
-
     def list_pdfs(self):
         pdf_paths = find_pdfs_in(self.selected_dir)
         for path in pdf_paths:
             self.textbox.insert("end", path + "\n")
-        self.open_pdf(pdf_paths)
+        parse_pdfs(pdf_paths)
 
     def button_click2(self):
         print("button click")
