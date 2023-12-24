@@ -12,6 +12,7 @@ from tkinter import messagebox
 import customtkinter
 from watchdog.observers.api import BaseObserver
 from ain.frames.explorer.explorer import Explorer
+from ain.frames.search.search import Search
 from ain.db.db_operation import create_table
 from ain.processes.manager import ProcessManager
 
@@ -25,6 +26,7 @@ class App(customtkinter.CTk):
         self.geometry("2100x1800")
         self.title("Ain - Legal AI")
 
+        self._search_frame: Search
         self._explorer_frame: Explorer
 
         self.grid_rowconfigure(1, weight=2)  # configure grid system
@@ -39,6 +41,13 @@ class App(customtkinter.CTk):
         self._explorer_frame.grid(
             row=0, column=0, padx=10, pady=10, sticky="nsew")
         self._explorer_frame.pack(pady=20)
+
+    def launch_search(self):
+        """Launch search frame."""
+        self._search_frame = Search(master=self)
+        self._search_frame.grid(
+            row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self._search_frame.pack(pady=20)
 
     def on_closing(self) -> None:
         """Triggered when the window is closed.

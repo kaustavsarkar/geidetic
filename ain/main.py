@@ -6,6 +6,7 @@ def launch():
     """Launches Tkinter App."""
     app = App()
     app.launch_explorer()
+    # app.launch_search()
     app.mainloop()
 
 
