@@ -11,7 +11,7 @@ they are done.
 import multiprocessing
 from multiprocessing import Process
 from multiprocessing.pool import IMapIterator
-from typing import Iterable, Callable, List
+from typing import List
 from watchdog.observers.api import BaseObserver
 
 from ain import search_engine
