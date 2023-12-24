@@ -15,6 +15,11 @@ _INDEX_DIR = "my_search_index"
 _EXTRACTED_PDF = "pdf_extracted_data"
 
 
+def _check_and_create_path(path: str):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
 def init_engine() -> None:
     """Initialises search engine"""
     init_dir()
@@ -24,6 +29,8 @@ def start_engine() -> BaseObserver:
     """Starts indexing"""
     curr_dir = os.getcwd()
     path = os.path.join(curr_dir, _EXTRACTED_PDF)
+    _check_and_create_path(path)
+    _check_and_create_path(os.path.join(curr_dir, _INDEX_DIR))
     print("start search engine", path)
     event_handler = Engine(index_dir=_INDEX_DIR,
                            src_dir=_EXTRACTED_PDF)
