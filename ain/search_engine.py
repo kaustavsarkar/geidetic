@@ -4,7 +4,7 @@
 import os
 import time
 from whoosh.fields import Schema, TEXT, ID
-from whoosh.index import create_in, FileIndex
+from whoosh.index import create_in, FileIndex, exists_in, open_dir
 from whoosh.writing import IndexWriter
 from watchdog.events import FileSystemEventHandler, FileSystemEvent, FileCreatedEvent
 from watchdog.observers import Observer
@@ -29,9 +29,6 @@ def start_engine() -> BaseObserver:
     """Starts indexing"""
     curr_dir = os.getcwd()
     path = os.path.join(curr_dir, _EXTRACTED_PDF)
-    _check_and_create_path(path)
-    _check_and_create_path(os.path.join(curr_dir, _INDEX_DIR))
-    print("start search engine", path)
     event_handler = Engine(index_dir=_INDEX_DIR,
                            src_dir=_EXTRACTED_PDF)
     observer = Observer()
@@ -44,8 +41,10 @@ def start_engine() -> BaseObserver:
 
 def init_dir() -> None:
     """Creates directory for saving indexed data."""
-    if not os.path.exists(_INDEX_DIR):
-        os.mkdir(_INDEX_DIR)
+    curr_dir = os.getcwd()
+    _check_and_create_path(os.path.join(curr_dir, _INDEX_DIR))
+    path = os.path.join(curr_dir, _EXTRACTED_PDF)
+    _check_and_create_path(path)
 
 
 class Engine(FileSystemEventHandler):
@@ -53,7 +52,10 @@ class Engine(FileSystemEventHandler):
 
     def __init__(self, index_dir: str, src_dir: str) -> None:
         self._schema = Schema(path=ID(stored=True), content=TEXT)
-        self._ix = create_in(index_dir, self._schema)
+        if not exists_in(index_dir):
+            self._ix = create_in(index_dir, self._schema)
+        else:
+            self._ix = open_dir("my_search_index", schema=self._schema)
         self._src_dir = src_dir
 
     def file_index(self) -> FileIndex:
@@ -92,7 +94,8 @@ class Engine(FileSystemEventHandler):
                 writer.add_document(path=src_path, content=content)
                 print("---> indexed in", time.time() - start, "seconds")
             os.remove(src_path)
-            print("---> total process in", time.time() - start_a, "seconds")
+            print("---> total process in", time.time() - start_a,
+                  "seconds and doc count", self._ix.doc_count())
 
 
 class _Writer():
