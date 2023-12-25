@@ -50,6 +50,8 @@ class Explorer(customtkinter.CTkFrame):
         self.pdf_viewer_frame = customtkinter.CTkFrame(self)
         self.pdf_viewer_frame.grid(row=3, sticky='ew')
 
+        self.filepath_display_cache = set()
+
     def browse(self):
         folder_path = filedialog.askdirectory(
             title='Select a directory to index')
@@ -59,9 +61,13 @@ class Explorer(customtkinter.CTkFrame):
 
     def list_pdfs(self):
         pdf_paths = find_pdfs_in(self.selected_dir)
+        new_paths = []
         for path in pdf_paths:
-            self.textbox.insert("end", path + "\n")
-        parse_pdfs(pdf_paths)
+            if path not in self.filepath_display_cache:
+                new_paths.append(path)
+                self.filepath_display_cache.add(path)
+                self.textbox.insert("end", path + "\n")
+        parse_pdfs(new_paths)
 
     def button_click2(self):
         print("button click")
