@@ -6,7 +6,7 @@ The Tkinter Frame contains the logic to perform following actions.
 3. Search PDFs.
 """
 import os
-from tkinter import filedialog
+from tkinter import filedialog, END
 import customtkinter
 from PIL import Image, ImageTk
 from whoosh.qparser import QueryParser
@@ -59,6 +59,10 @@ class Explorer(customtkinter.CTkFrame):
 
     def list_pdfs(self):
         pdf_paths = find_pdfs_in(self.selected_dir)
+
+        # clear textbox contents before showing any further details
+        self.textbox.delete('1.0', END)
+          
         for path in pdf_paths:
             self.textbox.insert("end", path + "\n")
         parse_pdfs(pdf_paths)
