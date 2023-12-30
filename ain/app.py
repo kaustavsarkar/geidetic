@@ -23,7 +23,20 @@ class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
-        self.geometry("2100x1800")
+
+        # get screen res
+        screen_height = self.winfo_screenheight()
+        screen_width =  self.winfo_screenwidth()
+        
+        # TODO: Make this configurable by the user
+        self.scale_factor = 0.75
+        
+        # scale the window size to be a fixed ratio of the screen res
+        window_height = int(screen_height * self.scale_factor) 
+        window_width = int(screen_width * self.scale_factor)
+        
+        self.geometry(f"{window_width}x{window_height}")
+
         self.title("Ain - Legal AI")
 
         self._search_frame: Search
