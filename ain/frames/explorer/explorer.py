@@ -41,7 +41,7 @@ class Explorer(customtkinter.CTkFrame):
             master=self, 
             width=(screen_width * master.scale_factor), 
             corner_radius=0)
-        self.textbox.grid(row=1, column=0, sticky="nsew")
+        self.textbox.grid(row=1, column=0, padx = 20, corner_radius = 10, sticky="nsew")
         self.textbox.insert("0.0", "Pdfs\n")
 
         # add search input 
@@ -51,7 +51,7 @@ class Explorer(customtkinter.CTkFrame):
         self.search_input.bind('<Return>', (lambda event: self.perform_search()))
 
         self.pdf_viewer_frame = customtkinter.CTkFrame(self)
-        self.pdf_viewer_frame.grid(row=3, sticky='ew', padx = 10)
+        self.pdf_viewer_frame.grid(row=3, sticky='ew', padx = 20)
 
     def browse(self):
         folder_path = filedialog.askdirectory(
