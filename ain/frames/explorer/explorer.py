@@ -48,6 +48,7 @@ class Explorer(customtkinter.CTkFrame):
         self.search_input = customtkinter.CTkEntry(
             self, placeholder_text="type here to search")
         self.search_input.grid(row=2, column=0, padx=10, pady=10)
+        self.search_input.bind('<Return>', (lambda event: self.perform_search()))
 
         self.pdf_viewer_frame = customtkinter.CTkFrame(self)
         self.pdf_viewer_frame.grid(row=3, sticky='ew', padx = 10)
