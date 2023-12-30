@@ -40,8 +40,8 @@ class Explorer(customtkinter.CTkFrame):
         self.textbox = customtkinter.CTkTextbox(
             master=self, 
             width=(screen_width * master.scale_factor), 
-            corner_radius=0)
-        self.textbox.grid(row=1, column=0, padx = 20, corner_radius = 10, sticky="nsew")
+            corner_radius=10)
+        self.textbox.grid(row=1, column=0, padx = 20, sticky="nsew")
         self.textbox.insert("0.0", "Pdfs\n")
 
         # add search input 
