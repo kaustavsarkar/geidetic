@@ -58,6 +58,7 @@ class Explorer(customtkinter.CTkFrame):
             title='Select a directory to index')
         if folder_path:
             self.selected_dir = folder_path
+            self.list_pdfs()
         return
 
     def list_pdfs(self):
