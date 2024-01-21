@@ -28,7 +28,9 @@
     },
     "dependencies": {
         "react": "^18.2.0",
-        "react-dom": "^18.2.0"
+        "react-dom": "^18.2.0",
+        "react-router-dom": "^6.21.3",
+        "rsuite": "^5.51.0"
     },
     "devDependencies": {
         "@types/bun": "^1.0.2",
@@ -40,6 +42,8 @@
         "eslint": "^8.55.0",
         "eslint-plugin-react-hooks": "^4.6.0",
         "eslint-plugin-react-refresh": "^0.4.5",
+        "run-script-os": "^1.1.6",
+        "sass": "^1.70.0",
         "typescript": "^5.2.2",
         "vite": "^5.0.8"
     }
