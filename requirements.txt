@@ -1,5 +1,6 @@
 bottle==0.12.25
 darkdetect==0.8.0
+Flask==3.0.1
 packaging==23.2
 Pillow==10.1.0
 pkg_resources==0.0.0
