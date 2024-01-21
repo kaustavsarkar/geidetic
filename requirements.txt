@@ -1,0 +1,20 @@
+bottle==0.12.25
+darkdetect==0.8.0
+packaging==23.2
+Pillow==10.1.0
+pkg_resources==0.0.0
+proxy_tools==0.1.0
+PyMuPDF==1.23.5
+PyMuPDFb==1.23.5
+PyQt5==5.15.10
+PyQt5-Qt5==5.15.2
+PyQt5-sip==12.13.0
+PyQtWebEngine==5.15.6
+PyQtWebEngine-Qt5==5.15.2
+pywebview==4.4.1
+QtPy==2.4.1
+typing_extensions==4.9.0
+watchdog==3.0.0
+Whoosh==2.7.4
+pyinstaller; sys_platform != 'darwin'
+py2app; sys_platform == 'darwin'

@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 myproject = {editable = true, path = "."}
+ain = {editable = true, path = "."}
 
 [dev-packages]
 
