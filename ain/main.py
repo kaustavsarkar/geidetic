@@ -1,35 +1,42 @@
 """Main class to launch the application."""
 import os
-from time import time
 import threading
 from PIL import Image
 import webview
+import flask
+from ain.fileio import reader
 from ain.processes.manager import ProcessManager
 
 # from ain.pages import search
 
 FAV_ICON = 'favicon.ico'
 path = os.path.join(os.getcwd(), 'ain', 'assets', FAV_ICON)
+app = flask.Flask(__name__)
+
+window = None
 
 
-class Api:
-    def fullscreen(self):
-        webview.windows[0].toggle_fullscreen()
+@app.route('/list', methods=['GET'])
+def list_directories():
+    files = window.create_file_dialog(
+        webview.OPEN_DIALOG, allow_multiple=True, file_types={'PDF Files(*.pdf)'})
+    reader.parse_pdfs(files)
+    return {'files': list(files)}, 200
 
-    def save_content(self, content):
-        filename = webview.windows[0].create_file_dialog(webview.SAVE_DIALOG)
-        if not filename:
-            return
 
-        with open(filename, 'w') as f:
-            f.write(content)
-
-    def ls(self):
-        return os.listdir('.')
+@app.after_request
+def after_request(response):
+    header = response.headers
+    header['Access-Control-Allow-Origin'] = '*'
+    header['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    header['Access-Control-Allow-Methods'] = 'OPTIONS, HEAD, GET, POST, DELETE, PUT'
+    return response
 
 
 def get_entrypoint():
     def exists(path):
+        print('checking index.html in ', os.path.join(
+            os.path.dirname(__file__), path))
         return os.path.exists(os.path.join(os.path.dirname(__file__), path))
 
     if exists('frontend/dist/index.html'):  # unfrozen development
@@ -44,41 +51,19 @@ def get_entrypoint():
     raise Exception('No index.html found')
 
 
-def set_interval(interval):
-    def decorator(function):
-        def wrapper(*args, **kwargs):
-            stopped = threading.Event()
-
-            def loop():  # executed in another thread
-                while not stopped.wait(interval):  # until stopped
-                    function(*args, **kwargs)
-
-            t = threading.Thread(target=loop)
-            t.daemon = True  # stop if the program exits
-            t.start()
-            return stopped
-        return wrapper
-    return decorator
+ENTRY = get_entrypoint()
 
 
-def launch():
-    print(path)
-    image = Image.open(path)
+def start_server():
     pm = ProcessManager.create_manager()
     pm.start_engine()
-    # search.open()
-
-
-entry = get_entrypoint()
-
-
-@set_interval(1)
-def update_ticker():
-    if len(webview.windows) > 0:
-        webview.windows[0].evaluate_js(
-            'window.pywebview.state.setTicker("%d")' % time())
+    app.run()
 
 
 if __name__ == '__main__':
-    window = webview.create_window('ain', entry, js_api=Api())
-    webview.start(update_ticker, debug=True)
+    t = threading.Thread(target=start_server)
+    t.daemon = True
+    t.start()
+
+    window = webview.create_window('ain', url=ENTRY, server=app)
+    webview.start(debug=True)

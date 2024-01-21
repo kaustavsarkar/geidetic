@@ -1,7 +1,10 @@
 from typing import Optional
 import sqlite3
+from ain.models import directory
 
 # Create a new SQLite database (or connect to an existing one)
+
+
 def create_table():
     conn = sqlite3.connect('file_mapping.db')
     cursor = conn.cursor()
@@ -19,20 +22,29 @@ def create_table():
     conn.commit()
     conn.close()
 
+
 def insert_file_mapping(file_name, file_path):
     conn = sqlite3.connect('file_mapping.db')
     cursor = conn.cursor()
 
-    cursor.execute('INSERT INTO file_mapping (file_name, file_path) VALUES (?, ?)', (file_name, file_path))
+    cursor.execute(
+        'INSERT INTO file_mapping (file_name, file_path) VALUES (?, ?)', (file_name, file_path))
 
     conn.commit()
     conn.close()
 
-def get_file_path(file_name) -> Optional[str]:
+
+def get_file_path(file_name: str) -> Optional[str]:
+    """Queries the database to fetch complete path for the file name.
+
+    Args:
+        file_name: Name of the file to be searched.
+    """
     conn = sqlite3.connect('file_mapping.db')
     cursor = conn.cursor()
 
-    cursor.execute('SELECT file_path FROM file_mapping WHERE file_name = ?', (file_name,))
+    cursor.execute(
+        'SELECT file_path FROM file_mapping WHERE file_name = ?', (file_name,))
     result = cursor.fetchone()
 
     conn.close()
@@ -41,3 +53,17 @@ def get_file_path(file_name) -> Optional[str]:
         return result[0]
     else:
         return None
+
+
+def list_all_files() -> 'list[directory.PdfMetadata]':
+    """Queries database for all parsed pdfs."""
+    conn = sqlite3.connect('file_mapping.db')
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT * FROM file_mapping')
+    result = cursor.fetchall()
+    pdfs: 'list[directory.PdfMetadata]' = []
+    for row in result:
+        pdf = directory.PdfMetadata.from_tuple(row)
+        pdfs.append(pdf)
+    return pdfs

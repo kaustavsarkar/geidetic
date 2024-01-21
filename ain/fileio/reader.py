@@ -1,5 +1,5 @@
 """Handles interactions with the file system."""
-from typing import List
+from typing import List, Sequence
 import os
 import re
 from multiprocessing import Process
@@ -30,7 +30,7 @@ def save_to_text_file(pdf_text, text_file_name):
         file.write(pdf_text)
 
 
-def parse_pdfs(pdf_paths):
+def parse_pdfs(pdf_paths: Sequence[str]):
     """Saves pdfs as text files.
 
     Iterates the list paths provided and saves each page of a
@@ -40,7 +40,7 @@ def parse_pdfs(pdf_paths):
     p.start()
 
 
-def _save(pdf_paths: List[str]):
+def _save(pdf_paths: Sequence[str]):
     for file_path in pdf_paths:
         if file_path:
             pdf_document = fitz.Document(file_path)
