@@ -22,8 +22,8 @@
         "init:gtk": "sudo apt install libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-3.0 && ./.venv/bin/pip/bin/pip install pycairo pygobject -r requirements.txt",
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
         "start": "bun run frontend:dev && run-script-os",
-        "start:windows": ".\\.venv\\Scripts\\python ain\\main.py",
-        "start:default": "./.venv/bin/python ain/main.py",
+        "start:windows": ".\\.venv\\Scripts\\python3 ain\\main.py",
+        "start:default": "./.venv/bin/python3 ain/main.py",
         "preview": "vite preview"
     },
     "dependencies": {
