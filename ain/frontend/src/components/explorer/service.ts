@@ -40,11 +40,14 @@ export default class ExplorerService {
   parsePdfs = async (pdfs: FileList): Promise<void> => {
     try {
       const response = await fetch(`http://localhost:5000/indexpdfs`, {
-        method: "GET",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: Object.keys(pdfs).length !== 0 ? JSON.stringify(pdfs) : null,
+        body:
+          Object.keys(pdfs).length !== 0
+            ? JSON.stringify({ selectedFiles: pdfs.selectedFiles })
+            : null,
       });
 
       if (response.ok) {

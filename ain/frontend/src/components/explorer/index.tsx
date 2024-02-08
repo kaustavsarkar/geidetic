@@ -120,6 +120,12 @@ function Explorer() {
     setFileList({...fileListState});
     console.log(fileListState!.fileList.selectedFiles);
   };
+
+  const memorisePdfs = () => {
+    const service = new ExplorerService();
+    service.parsePdfs(fileListState.fileList);
+  }
+
   return (
     <div className="explorer-container">
       <Grid fluid>
@@ -134,7 +140,7 @@ function Explorer() {
               Select Files...
             </IconButton>
             <IconButton
-              onClick={showExplorer}
+              onClick={memorisePdfs}
               size="lg"
               icon={<PlayIcon />}
               color="violet"
