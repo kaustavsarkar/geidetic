@@ -7,9 +7,9 @@ import SideNavBar from "./components/navbar";
 function App() {
   return (
     <>
-      <div>
+      <div className="app">
         <SideNavBar></SideNavBar>
-        <div>
+        <div className="app-content">
           <Routes>
             <Route path="/" element={<Explorer></Explorer>}></Route>
             <Route path="/explorer" element={<Explorer></Explorer>}></Route>

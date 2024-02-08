@@ -1,3 +1,7 @@
+@import 'rsuite/dist/rsuite.min.css';
+/* // Enable dark mode */
+/* @enable-dark-mode: true; */
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -5,7 +9,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: #0B0909;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -28,6 +32,7 @@ body {
   /* place-items: center; */
   /* min-width: 320px; */
   min-height: 100vh;
+  overflow: auto;
 }
 
 h1 {
@@ -56,13 +61,18 @@ button:focus-visible {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    color: #ffffff;
+    background-color: #0B0909;
   }
   a:hover {
     color: #747bff;
   }
   button {
-    background-color: #f9f9f9;
+    background-color: #0B0909;
   }
 }
+
+/* ebony #4444C */
+/* Gray #8C8C8C */
+/* Pewter #D6D6D6 */
+/* https://www.kseniiakrasilich.com/squarespace-help/luxurious-color-palette#:~:text=The%20monochromatic%20design%20helps%20to%20create%20a,design%20including%20financial%2C%20law%20firms%20and%20more. */

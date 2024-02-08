@@ -1,8 +1,17 @@
 #root {
-  max-width: 1280px;
+  /* max-width: 1280px; */
   /* margin: 0 auto; */
   /* padding: 2rem; */
-  text-align: center;
+  /* text-align: center; */
+  min-height: 100vh;
+
+  .app {
+    min-height: 100vh;
+
+    .app-content {
+      min-height: 100%;
+    }
+  }
 }
 
 .logo {

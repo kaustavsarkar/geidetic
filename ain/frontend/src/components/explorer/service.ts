@@ -1,11 +1,20 @@
-import { FileList } from "./model";
+import { FileList, IFileList } from "./model";
+
+const isLocal = import.meta.env.MODE === "development";
 
 export default class ExplorerService {
   /**
    * Sends a request to the server to allow the user to select pdfs for parsing.
    * @returns list of pdfs selected
    */
+  _files = (): IFileList =>
+    JSON.parse(
+      ` {"files":["/home/kaustav/work/ain/view-bill.pdf","/home/kaustav/work/ain/legal_gk.pdf","/home/kaustav/work/ain/lexpedia.pdf","/home/kaustav/work/ain/judicial.pdf"]}`
+    );
   fetchPdfs = async (): Promise<FileList | null> => {
+    if (isLocal) {
+      return new FileList(this._files());
+    }
     try {
       const response = await fetch(`http://localhost:5000/fetchPdfs`, {
         method: "GET",
@@ -15,10 +24,10 @@ export default class ExplorerService {
       });
 
       if (response.ok) {
-        return new FileList(response.json);
+        return new FileList(await response.json());
       }
     } catch (e) {
-      // Handle the error.
+      console.log(e);
     }
     return null;
   };
@@ -30,7 +39,7 @@ export default class ExplorerService {
    */
   parsePdfs = async (pdfs: FileList): Promise<void> => {
     try {
-      const response = await fetch(`http://localhost:5000/parsePdfs`, {
+      const response = await fetch(`http://localhost:5000/indexpdfs`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
