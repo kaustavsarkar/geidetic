@@ -1,15 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sidenav, Nav } from "rsuite";
+import { Header, Navbar, Nav } from "rsuite";
+import CogIcon from '@rsuite/icons/legacy/Cog';
 
-import './navbar.scss';
+import "./navbar.scss";
 
-interface IProps {
-  expanded: boolean;
-}
-
-function SideNavBar(props: IProps) {
-  const [expanded, setExpanded] = useState(props.expanded);
+function SideNavBar() {
   const [activeNav, setActiveNav] = useState("");
   const navigate = useNavigate();
   const onSelectNav = (eventKey: string) => {
@@ -28,11 +24,11 @@ function SideNavBar(props: IProps) {
   return (
     <>
       <div className="sidenav-container">
-        <Sidenav expanded={expanded}>
-          <Sidenav.Header>
-            <div className="header">Ain - Legal AI</div>
-          </Sidenav.Header>
-          <Sidenav.Body>
+        <Header>
+          <Navbar appearance="inverse">
+            <Navbar.Brand>
+              <a style={{ color: "#fff" }}>Ain - Logal AI</a>
+            </Navbar.Brand>
             <Nav
               onSelect={onSelectNav}
               activeKey={activeNav}
@@ -41,9 +37,11 @@ function SideNavBar(props: IProps) {
               <Nav.Item eventKey="explorer">Explorer</Nav.Item>
               <Nav.Item eventKey="home">Home</Nav.Item>
             </Nav>
-          </Sidenav.Body>
-          <Sidenav.Toggle onToggle={setExpanded} />
-        </Sidenav>
+            <Nav pullRight>
+            <Nav.Item icon={<CogIcon />}>Settings</Nav.Item>
+          </Nav>
+          </Navbar>
+        </Header>
       </div>
     </>
   );

@@ -8,7 +8,7 @@ function App() {
   return (
     <>
       <div>
-        <SideNavBar expanded={true}></SideNavBar>
+        <SideNavBar></SideNavBar>
         <div>
           <Routes>
             <Route path="/" element={<Explorer></Explorer>}></Route>
