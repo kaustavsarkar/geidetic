@@ -14,13 +14,7 @@ from multiprocessing.pool import IMapIterator
 from typing import List
 from watchdog.observers.api import BaseObserver
 
-from ain import search_engine
-
-
-def pool_init():
-    """Called while initialising Process Pool"""
-    search_engine.init_engine()
-    print("Process Pool initialised")
+from ain.engine import search_engine
 
 
 class ProcessManager:
@@ -48,15 +42,7 @@ class ProcessManager:
     def __init__(self) -> None:
         self._cpu_num = multiprocessing.cpu_count()
         self._processes: List[Process] = []
-        pool_init()
         self._results: List[IMapIterator] = []
-
-    def start_engine(self) -> BaseObserver:
-        """Creates a process to run the search engine."""
-        # index_proc = multiprocessing.Process(target=search_engine.start_engine)
-        # index_proc.start()
-        # return index_proc
-        return search_engine.start_engine()
 
     def close_all(self) -> None:
         """Closes all processes.

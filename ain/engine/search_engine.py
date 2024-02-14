@@ -9,6 +9,9 @@ from whoosh.writing import IndexWriter
 from watchdog.events import FileSystemEventHandler, FileSystemEvent, FileCreatedEvent
 from watchdog.observers import Observer
 from watchdog.observers.api import BaseObserver
+from whoosh.qparser import QueryParser
+from ain.db.db_operation import get_file_path
+from ain.engine.search_results import SearchItem, SearchResult
 
 
 _INDEX_DIR = "my_search_index"
@@ -25,18 +28,18 @@ def init_engine() -> None:
     init_dir()
 
 
-def start_engine() -> BaseObserver:
+def start_engine() -> 'tuple[Engine,BaseObserver]':
     """Starts indexing"""
     curr_dir = os.getcwd()
     path = os.path.join(curr_dir, _EXTRACTED_PDF)
-    event_handler = Engine(index_dir=_INDEX_DIR,
+    search_engine = Engine(index_dir=_INDEX_DIR,
                            src_dir=_EXTRACTED_PDF)
     observer = Observer()
-    observer.schedule(event_handler=event_handler,
+    observer.schedule(event_handler=search_engine,
                       path=path, recursive=False)
     observer.start()
     print("observer started")
-    return observer
+    return search_engine, observer
 
 
 def init_dir() -> None:
@@ -58,10 +61,6 @@ class Engine(FileSystemEventHandler):
             self._ix = open_dir("my_search_index", schema=self._schema)
         self._src_dir = src_dir
 
-    def file_index(self) -> FileIndex:
-        """Returns instance of File Index."""
-        return self._ix
-
     def on_created(self, event: FileSystemEvent) -> None:
         """Overrides FileSystemEventHandler on_created.
 
@@ -82,6 +81,35 @@ class Engine(FileSystemEventHandler):
         print(txt_path)
         if txt_path.endswith(".txt"):
             self._index(txt_path)
+
+    def find_results(self, search_text: str) -> SearchResult:
+        """Finds results from the index."""
+        search_result: SearchResult = SearchResult()
+        with self._ix.searcher() as searcher:
+            query = QueryParser("content", self._ix.schema).parse(search_text)
+            results = searcher.search(query, limit=None)
+            for hit in results:
+                # path is the path along with page number.
+                path = hit['path']
+                path_without_extension = os.path.splitext(
+                    os.path.basename(path))[0]
+                page_no_file_name = path_without_extension.split('#')
+                page_number = page_no_file_name[0]
+                file_name = page_no_file_name[1]
+                file_path = get_file_path(file_name)
+                # print(file_path)
+                if file_path is None:
+                    return []
+                flag = False
+                for item in search_result.search_items:
+                    if item.file_path == file_path:
+                        item.append_page(page_number)
+                        flag = True
+                if flag is False:
+                    search_result.add_search_item(
+                        SearchItem(file_path=file_path, pages=[page_number])
+                    )
+        return search_result
 
     def _index(self, src_path: str) -> None:
         """Indexes the content of extracted PDF."""

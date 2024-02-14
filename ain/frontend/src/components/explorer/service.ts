@@ -3,14 +3,14 @@ import { FileList, IFileList } from "./model";
 const isLocal = import.meta.env.MODE === "development";
 
 export default class ExplorerService {
-  /**
-   * Sends a request to the server to allow the user to select pdfs for parsing.
-   * @returns list of pdfs selected
-   */
   _files = (): IFileList =>
     JSON.parse(
       ` {"files":["/home/kaustav/work/ain/view-bill.pdf","/home/kaustav/work/ain/legal_gk.pdf","/home/kaustav/work/ain/lexpedia.pdf","/home/kaustav/work/ain/judicial.pdf"]}`
     );
+  /**
+   * Sends a request to the server to allow the user to select pdfs for parsing.
+   * @returns list of pdfs selected
+   */
   fetchPdfs = async (): Promise<FileList | null> => {
     if (isLocal) {
       return new FileList(this._files());

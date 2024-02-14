@@ -3,6 +3,7 @@ import "./App.css";
 import "./components/explorer/index";
 import Explorer from "./components/explorer/index";
 import SideNavBar from "./components/navbar";
+import Search from "./components/search";
 
 function App() {
   return (
@@ -11,7 +12,7 @@ function App() {
         <SideNavBar></SideNavBar>
         <div className="app-content">
           <Routes>
-            <Route path="/" element={<Explorer></Explorer>}></Route>
+            <Route path="/" element={<Search></Search>}></Route>
             <Route path="/explorer" element={<Explorer></Explorer>}></Route>
           </Routes>
         </div>
