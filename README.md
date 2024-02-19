@@ -77,7 +77,7 @@ https://github.com/dzc0d3r/pywebview-react-boilerplate/tree/main
 
 A very high level roadmap.
 
-[] Develop a simple search tool with Whoosh.
-[] Work on UX and reliability
-[] Work to ensure the performance is good.
-[] Integrate with an LLM.
+- [ ] Develop a simple search tool with Whoosh.
+- [ ] Work on UX and reliability
+- [ ] Work to ensure the performance is good.
+- [ ] Integrate with an LLM.
