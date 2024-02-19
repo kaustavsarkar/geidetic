@@ -1,17 +1,19 @@
 """A whoosh wrapper for AIN.
 """
 
+from multiprocessing import Queue
 import os
 import time
 from whoosh.fields import Schema, TEXT, ID
 from whoosh.index import create_in, FileIndex, exists_in, open_dir
 from whoosh.writing import IndexWriter
+from whoosh.qparser import QueryParser
 from watchdog.events import FileSystemEventHandler, FileSystemEvent, FileCreatedEvent
 from watchdog.observers import Observer
 from watchdog.observers.api import BaseObserver
-from whoosh.qparser import QueryParser
-from ain.db.db_operation import get_file_path
+from ain.db.db_operation import get_file_path, update_job_progress
 from ain.engine.search_results import SearchItem, SearchResult
+from ain.models import ingestion_job as ij
 
 
 _INDEX_DIR = "my_search_index"
@@ -28,12 +30,13 @@ def init_engine() -> None:
     init_dir()
 
 
-def start_engine() -> 'tuple[Engine,BaseObserver]':
+def start_engine(job_task_q: 'Queue[tuple[str, str, str]]') -> 'tuple[Engine,BaseObserver]':
     """Starts indexing"""
     curr_dir = os.getcwd()
     path = os.path.join(curr_dir, _EXTRACTED_PDF)
     search_engine = Engine(index_dir=_INDEX_DIR,
-                           src_dir=_EXTRACTED_PDF)
+                           src_dir=_EXTRACTED_PDF,
+                           job_task_q=job_task_q)
     observer = Observer()
     observer.schedule(event_handler=search_engine,
                       path=path, recursive=False)
@@ -53,13 +56,18 @@ def init_dir() -> None:
 class Engine(FileSystemEventHandler):
     """Wraps implementation of indexing the texts"""
 
-    def __init__(self, index_dir: str, src_dir: str) -> None:
+    def __init__(self, index_dir: str, src_dir: str,
+                 job_task_q: 'Queue[tuple[str, str, str]]') -> None:
         self._schema = Schema(path=ID(stored=True), content=TEXT)
         if not exists_in(index_dir):
             self._ix = create_in(index_dir, self._schema)
         else:
             self._ix = open_dir("my_search_index", schema=self._schema)
         self._src_dir = src_dir
+        self._job_task_q = job_task_q
+        # A dictionary with job_id as key and dict. The other dict is
+        # file path as key for total pages and page.
+        self._job_cache: 'dict[str, ij.IngestionJob]' = {}
 
     def on_created(self, event: FileSystemEvent) -> None:
         """Overrides FileSystemEventHandler on_created.
@@ -121,6 +129,27 @@ class Engine(FileSystemEventHandler):
                 start = time.time()
                 writer.add_document(path=src_path, content=content)
                 print("---> indexed in", time.time() - start, "seconds")
+            while True:
+                job_id, file_path, total_pages, page_number = self._job_task_q.get_nowait()
+                if not file_path:
+                    break
+                ingestion_job = self._job_cache.get(job_id)
+                if ingestion_job is None:
+                    self._job_cache[job_id] = ij.IngestionJob(
+                        job_id=job_id,
+                        status=ij.JobStatus.IN_PROGRESS,
+                        files=[],
+                        completed_files=[],
+                        reason="",
+                        progress=0)
+                is_done = self._job_cache[job_id].processed_file(
+                    file_path,
+                    page_number, total_pages)
+                if is_done:
+                    update_job_progress(
+                        job_id=job_id,
+                        completed_files=self._job_cache[job_id].completed_files)
+
             os.remove(src_path)
             print("---> total process in", time.time() - start_a,
                   "seconds and doc count", self._ix.doc_count())

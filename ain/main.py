@@ -1,12 +1,13 @@
 """Main class to launch the application."""
 import os
+from multiprocessing import Queue
 import threading
 import webbrowser
 import webview
 from flask import Flask, request
 from ain.engine.search_engine import start_engine, init_engine, Engine
-
-# from ain.pages import search
+from ain.db.db_operation import create_tables
+from ain.fileio import reader
 
 FAV_ICON = 'favicon.ico'
 path = os.path.join(os.getcwd(), 'ain', 'assets', FAV_ICON)
@@ -14,6 +15,7 @@ app = Flask(__name__)
 
 window = None
 search_engine: Engine
+job_task_q: 'Queue[tuple[str, str, str]]' = Queue()
 
 
 @app.route('/fetchPdfs', methods=['GET'])
@@ -28,7 +30,7 @@ def list_directories():
 def index_pdfs():
     """Runs index job on the requested files."""
     files = request.get_json()
-    reader.parse_pdfs(files)
+    reader.parse_pdfs(files, job_task_q)
     print(files)
     return '', 200
 
@@ -99,7 +101,7 @@ if __name__ == '__main__':
     t.start()
 
     init_engine()
-    search_engine, observer = start_engine()
-    print(ENTRY)
+    create_tables()
+    search_engine, observer = start_engine(job_task_q)
     window = webview.create_window('ain', url=ENTRY, server=app)
     webview.start(debug=True)

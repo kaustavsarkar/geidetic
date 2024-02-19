@@ -2,9 +2,9 @@
 from typing import List, Sequence
 import os
 import re
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 import fitz
-from ain.db.db_operation import insert_file_mapping
+from ain.db.db_operation import insert_file_mapping, insert_new_job
 
 
 def find_pdfs_in(folder_path: str) -> List[str]:
@@ -30,17 +30,21 @@ def save_to_text_file(pdf_text, text_file_name):
         file.write(pdf_text)
 
 
-def parse_pdfs(pdf_paths: Sequence[str]):
+def parse_pdfs(pdf_paths: Sequence[str],
+               job_task_q: 'Queue[tuple[str, str, str]]'):
     """Saves pdfs as text files.
 
     Iterates the list paths provided and saves each page of a
     pdf as a text file.
     """
-    p = Process(target=_save, args=(pdf_paths, ), name="python_ain_pdf_parser")
+    p = Process(target=_save, args=(pdf_paths, job_task_q, ),
+                name="python_ain_pdf_parser")
     p.start()
 
 
-def _save(pdf_paths: Sequence[str]):
+def _save(pdf_paths: Sequence[str],
+          job_task_q: 'Queue[tuple[str, str, str]]'):
+    job_id = insert_new_job(pdf_paths)
     for file_path in pdf_paths:
         if file_path:
             pdf_document = fitz.Document(file_path)
@@ -54,4 +58,6 @@ def _save(pdf_paths: Sequence[str]):
                 page = pdf_document.load_page(i)
                 pdf_text = page.get_text("text")
                 text_file_name = str(i) + '#' + pdf_name + '.txt'
+                job_task_q.put((job_id, file_path, len(pdf_document), page))
                 save_to_text_file(pdf_text, text_file_name)
+    
