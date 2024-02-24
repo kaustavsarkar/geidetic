@@ -30,23 +30,21 @@ def save_to_text_file(pdf_text, text_file_name):
         file.write(pdf_text)
 
 
-def parse_pdfs(pdf_paths: Sequence[str],
-               job_task_q: 'Queue[tuple[str, str, str]]'):
+def parse_pdfs(pdf_paths: Sequence[str]):
     """Saves pdfs as text files.
 
     Iterates the list paths provided and saves each page of a
     pdf as a text file.
     """
-    p = Process(target=_save, args=(pdf_paths, job_task_q, ),
+    p = Process(target=_save, args=(pdf_paths, ),
                 name="python_ain_pdf_parser")
     p.start()
 
 
-def _save(pdf_paths: Sequence[str],
-          job_task_q: 'Queue[tuple[str, str, str]]'):
+def _save(pdf_paths: Sequence[str]):
     job_id = insert_new_job(pdf_paths)
+    total_files = len(pdf_paths)
     for file_path in pdf_paths:
-        total_files = len(pdf_paths)
         try:
             if file_path:
                 pdf_document = fitz.Document(file_path)
@@ -55,7 +53,7 @@ def _save(pdf_paths: Sequence[str],
                 pdf_name = re.sub(r'[^a-zA-Z0-9\s]', '', pdf_name)
                 pdf_name = pdf_name.replace(' ', '_')
                 insert_file_mapping(file_name=pdf_name,
-                                    file_path=pdf_document.name)
+                                    file_path=pdf_document.name, pages=pdf_document.page_count)
                 for i in range(len(pdf_document)):
                     page = pdf_document.load_page(i)
                     pdf_text = page.get_text("text")
@@ -63,5 +61,5 @@ def _save(pdf_paths: Sequence[str],
                     text_file_name = f'{pdf_name}#{str(i + 1)}#{len(pdf_document)}#{job_id}#{total_files}.txt'
                     save_to_text_file(pdf_text, text_file_name)
         except Exception as e:
-            total_files = total_files - 1
-            print(e)
+            print("empty file", file_path, e)
+            # print(get_job_details(job_id).to_dict)

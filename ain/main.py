@@ -1,7 +1,6 @@
 """Main class to launch the application."""
 import os
 import re
-from multiprocessing import Queue
 import threading
 import webbrowser
 import webview
@@ -18,7 +17,6 @@ app = Flask(__name__)
 
 window = None
 search_engine: Engine
-job_task_q: 'Queue[tuple[str, str, str]]' = Queue()
 
 
 @app.route('/fetchPdfs', methods=['GET'])
@@ -26,6 +24,7 @@ def list_directories():
     """Lists the directories selected by the researcher."""
     files = window.create_file_dialog(
         webview.OPEN_DIALOG, allow_multiple=True, file_types={'PDF Files(*.pdf)'})
+    files = [f for f in files if os.path.getsize(f) > 0]
     return {'files': list(files)}, 200
 
 
@@ -33,8 +32,7 @@ def list_directories():
 def index_pdfs():
     """Runs index job on the requested files."""
     files = request.get_json()['selectedFiles']
-    reader.parse_pdfs(files, job_task_q)
-    print(files)
+    reader.parse_pdfs(files)
     return '', 200
 
 
@@ -146,6 +144,6 @@ if __name__ == '__main__':
 
     init_engine()
     create_tables()
-    search_engine, observer = start_engine(job_task_q)
+    search_engine, observer = start_engine()
     window = webview.create_window('ain', url=ENTRY, server=app)
     webview.start(debug=True)
