@@ -1,6 +1,7 @@
 """Contains models pertaining to ingestion job."""
 from enum import Enum
 from datetime import datetime
+import math
 
 
 class JobStatus(Enum):
@@ -41,21 +42,65 @@ class IngestionJob():
         # Total pages against each file.
         self._total_files: 'dict[str, int]' = {}
         self._in_process_files: 'dict[str, list[str]]' = {}
+        self._doc_count = 0
 
     @property
     def to_dict(self) -> str:
         """Converts the class into dictionary."""
-        return self.__dict__
+        return {
+            'id': self.id,
+            'status': self.status.name,
+            'reason': self.reason,
+            'files': self.files,
+            'completedFiles': self.completed_files,
+            'progress': self.progress,
+            'createdAt': self.created_at,
+            'updatedAt': self.updated_at,
+        }
 
-    def processed_file(self, file_path: str, page_number: str, total_pages: int) -> bool:
+    def processed_file(self, file_path: str, page_number: str) -> bool:
         """Determines whether a file has been completely processed or not."""
-        if self._total_files[file_path] is None:
-            self._total_files[file_path] = total_pages
-        if self._in_process_files[file_path] is None:
+        if file_path not in self._in_process_files:
             self._in_process_files[file_path] = []
         self._in_process_files[file_path].append(page_number)
+
+        print("is file complete ", self._in_process_files, self._total_files)
 
         if len(self._in_process_files[file_path]) == self._total_files[file_path]:
             self.completed_files.append(file_path)
             return True
         return False
+
+    def add_file_page_count(self, file_path: str, page_count: str):
+        """Assigns number of pages to a file."""
+        if file_path not in self.files:
+            self.files.append(file_path)
+        if file_path not in self._total_files:
+            self._total_files[file_path] = int(page_count)
+
+    def has_file(self, file_name: str) -> bool:
+        """Check if a file exists in a job."""
+        print(self.files, file_name)
+        return file_name in self.files
+
+    def is_done(self) -> bool:
+        """Returns if the job is done."""
+        print("is job done", self.files, self.completed_files)
+        return len(self.files) == len(self.completed_files)
+
+    def set_doc_count(self, doc_count: int):
+        self._doc_count = doc_count
+
+    @property
+    def get_progress(self) -> float:
+        in_process_count = len(self._in_process_files)
+        total_pages = 0
+        for _, page_count in self._total_files.items():
+            total_pages = total_pages + page_count
+        done_page_count = 0
+        for _, pages in self._in_process_files.items():
+            done_page_count = done_page_count + len(pages)
+            print(done_page_count, total_pages,
+                  in_process_count, self._doc_count)
+        return ((done_page_count/total_pages) *
+                (in_process_count/self._doc_count)) * 100

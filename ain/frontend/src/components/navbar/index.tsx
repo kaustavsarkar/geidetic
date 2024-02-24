@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header, Navbar, Nav } from "rsuite";
-import CogIcon from '@rsuite/icons/legacy/Cog';
+import CogIcon from "@rsuite/icons/legacy/Cog";
 
 import "./navbar.scss";
 
@@ -17,8 +17,11 @@ function SideNavBar() {
       case "explorer":
         navigate("/explorer");
         break;
-      default:
-        navigate("/");
+      case "jobs":
+        navigate("/jobs");
+        break;
+      // default:
+      //   navigate("/");
     }
   };
   return (
@@ -37,9 +40,11 @@ function SideNavBar() {
               <Nav.Item eventKey="explorer">Explorer</Nav.Item>
               <Nav.Item eventKey="home">Home</Nav.Item>
             </Nav>
-            <Nav pullRight>
-            <Nav.Item icon={<CogIcon />}>Settings</Nav.Item>
-          </Nav>
+            <Nav pullRight onSelect={onSelectNav}>
+              <Nav.Menu icon={<CogIcon />} title="Settings">
+                <Nav.Item eventKey="jobs">Jobs</Nav.Item>
+              </Nav.Menu>
+            </Nav>
           </Navbar>
         </Header>
       </div>

@@ -46,18 +46,22 @@ def _save(pdf_paths: Sequence[str],
           job_task_q: 'Queue[tuple[str, str, str]]'):
     job_id = insert_new_job(pdf_paths)
     for file_path in pdf_paths:
-        if file_path:
-            pdf_document = fitz.Document(file_path)
-            pdf_name = pdf_document.name
-            pdf_name = os.path.splitext(os.path.basename(file_path))[0]
-            pdf_name = re.sub(r'[^a-zA-Z0-9\s]', '', pdf_name)
-            pdf_name = pdf_name.replace(' ', '_')
-            insert_file_mapping(file_name=pdf_name,
-                                file_path=pdf_document.name)
-            for i in range(len(pdf_document)):
-                page = pdf_document.load_page(i)
-                pdf_text = page.get_text("text")
-                text_file_name = str(i) + '#' + pdf_name + '.txt'
-                job_task_q.put((job_id, file_path, len(pdf_document), page))
-                save_to_text_file(pdf_text, text_file_name)
-    
+        total_files = len(pdf_paths)
+        try:
+            if file_path:
+                pdf_document = fitz.Document(file_path)
+                pdf_name = pdf_document.name
+                pdf_name = os.path.splitext(os.path.basename(file_path))[0]
+                pdf_name = re.sub(r'[^a-zA-Z0-9\s]', '', pdf_name)
+                pdf_name = pdf_name.replace(' ', '_')
+                insert_file_mapping(file_name=pdf_name,
+                                    file_path=pdf_document.name)
+                for i in range(len(pdf_document)):
+                    page = pdf_document.load_page(i)
+                    pdf_text = page.get_text("text")
+                    # <pdf_name>#<page_number>#<total_pages>#<job_id>#<pdf_count>.txt
+                    text_file_name = f'{pdf_name}#{str(i + 1)}#{len(pdf_document)}#{job_id}#{total_files}.txt'
+                    save_to_text_file(pdf_text, text_file_name)
+        except Exception as e:
+            total_files = total_files - 1
+            print(e)

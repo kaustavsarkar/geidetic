@@ -8,6 +8,7 @@ import {
   FlexboxGrid,
   Grid,
   IconButton,
+  Loader,
   Panel,
   Row,
 } from "rsuite";
@@ -29,9 +30,30 @@ interface IFileItem {
 function FileItem(props: IFileItem) {
   const path = props.file;
   const fileName = path.replace(/^.*[\\/]/, "");
+  const [ingestedPath, setIngestedPath] = useState<string | null>(null);
+  useEffect(() => {
+    const service = new ExplorerService();
+    service
+      .getFilePath(fileName.split(".")[0])
+      .then((r) => {
+        setIngestedPath(r);
+      })
+      .catch(() => setIngestedPath(""));
+  }, []);
   return (
     <>
-      <Checkbox value={path}>{fileName}</Checkbox>
+      <Checkbox value={path} disabled={ingestedPath == null}>
+        {fileName}&nbsp;&nbsp;&nbsp;
+        {ingestedPath === null ? (
+          <Loader content="Checking..."></Loader>
+        ) : ingestedPath === path ? (
+          `File is already ingested from the same path`
+        ) : ingestedPath === "" ? (
+          ""
+        ) : (
+          `File with same name was read from ${ingestedPath}`
+        )}
+      </Checkbox>
     </>
   );
 }
@@ -106,7 +128,9 @@ function FilesContainer(props: IFcProps) {
  * @returns a react component
  */
 function Explorer() {
-  const [fileListState, setFileList] = useState({ fileList: new FileList(null) });
+  const [fileListState, setFileList] = useState({
+    fileList: new FileList(null),
+  });
   const showExplorer = async () => {
     const service = new ExplorerService();
     const response = (await service.fetchPdfs())!;
@@ -117,14 +141,15 @@ function Explorer() {
 
   const updateSelectedFiles = (files: string[]) => {
     fileListState!.fileList.selectedFiles = files;
-    setFileList({...fileListState});
+    setFileList({ ...fileListState });
     console.log(fileListState!.fileList.selectedFiles);
   };
 
   const memorisePdfs = () => {
     const service = new ExplorerService();
     service.parsePdfs(fileListState.fileList);
-  }
+    setFileList({ fileList: new FileList(null) });
+  };
 
   return (
     <div className="explorer-container">

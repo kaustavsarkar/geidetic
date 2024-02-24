@@ -1,5 +1,6 @@
 """Main class to launch the application."""
 import os
+import re
 from multiprocessing import Queue
 import threading
 import webbrowser
@@ -8,6 +9,8 @@ from flask import Flask, request
 from ain.engine.search_engine import start_engine, init_engine, Engine
 from ain.db.db_operation import create_tables
 from ain.fileio import reader
+from ain.models import ingestion_job
+from ain.db import db_operation as db
 
 FAV_ICON = 'favicon.ico'
 path = os.path.join(os.getcwd(), 'ain', 'assets', FAV_ICON)
@@ -29,7 +32,7 @@ def list_directories():
 @app.route('/indexpdfs', methods=['POST'])
 def index_pdfs():
     """Runs index job on the requested files."""
-    files = request.get_json()
+    files = request.get_json()['selectedFiles']
     reader.parse_pdfs(files, job_task_q)
     print(files)
     return '', 200
@@ -56,6 +59,47 @@ def open_pdf():
         return '', 200
 
     return '', 500
+
+
+@app.route('/jobs', methods=['POST'])
+def list_jobs():
+    """Lists ingestion jobs."""
+    status = request.get_json()['status']
+    jobs = None
+    if status == ingestion_job.JobStatus.IN_PROGRESS.name:
+        jobs = db.list_in_progress_jobs()
+    response: 'list[str]' = []
+    if not jobs:
+        return '', 404
+
+    for job in jobs:
+        response.append(job.to_dict)
+    print(response)
+    return {'jobs': response}, 200
+
+
+@app.route('/job', methods=['POST'])
+def get_job():
+    "Gets the job details"
+    job_id = request.get_json()['id']
+    job = db.get_job_details(job_id=job_id)
+
+    if not job:
+        return '', 404
+    return job.to_dict, 200
+
+
+@app.route('/pdfpath', methods=['POST'])
+def get_pdf_path():
+    "Gets the path of the PDF."
+    pdf_name = request.get_json()['pdfName']
+    pdf_name = re.sub(r'[^a-zA-Z0-9\s]', '', pdf_name)
+    pdf_name = pdf_name.replace(' ', '_')
+    file_path = db.get_file_path(file_name=pdf_name)
+
+    if not file_path:
+        return '', 404
+    return {'path': file_path}, 200
 
 
 @app.after_request

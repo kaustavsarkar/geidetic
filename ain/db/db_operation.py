@@ -8,7 +8,7 @@ from ain.models import directory, ingestion_job
 
 # Create a new SQLite database (or connect to an existing one)
 
-CONN: Connection = sqlite3.connect('file_mapping.db')
+CONN: Connection = sqlite3.connect('file_mapping.db', check_same_thread=False)
 
 
 def create_tables():
@@ -30,6 +30,7 @@ def create_tables():
             reason   TEXT,
             files    TEXT,
             completedFiles TEXT,
+            progress REAL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -106,7 +107,7 @@ def insert_new_job(files: 'list[str]') -> str:
     return job_id
 
 
-def udpate_job_status(job_id: str, status: ingestion_job.JobStatus, reason: 'Optional[str]'):
+def update_job_status(job_id: str, status: ingestion_job.JobStatus, reason: 'Optional[str]'):
     """Updates the provided job_id status to IN_PROGRESS."""
     cursor = CONN.cursor()
     if reason:
@@ -125,15 +126,16 @@ def udpate_job_status(job_id: str, status: ingestion_job.JobStatus, reason: 'Opt
     CONN.commit()
 
 
-def update_job_progress(job_id: str, completed_files: 'list[str]'):
+def update_job_progress(job_id: str, completed_files: 'list[str]', progress: float):
     """Updates job progress."""
+    print("updating job progress", job_id, progress)
     cursor = CONN.cursor()
     files = ','.join(completed_files)
     cursor.execute('''
     UPDATE IngestionJobs
-    SET completedFiles = ?, updated_at = ?
+    SET completedFiles = ?, progress = ?, updated_at = ?
     WHERE id = ?
-    ''', (files, datetime.now(), job_id))
+    ''', (files, progress, datetime.now(), job_id))
 
     CONN.commit()
 
@@ -143,24 +145,44 @@ def list_in_progress_jobs() -> 'Optional[list[ingestion_job.IngestionJob]]':
     cursor = CONN.cursor()
     cursor.execute('''
     SELECT 
-        id, status, reason, files, completedFiles, created_at, updated_at 
+        id, status, reason, files, completedFiles, created_at, updated_at, progress 
         FROM IngestionJobs
-        WHERE status = "inprogress"
+    WHERE status = "IN_PROGRESS"
     ''')
     jobs = []
     for row in cursor:
-        job_id = row[0]
-        status = ingestion_job.JobStatus.from_string(status=row[1])
-        reason = row[2]
-        files = str(row[3]).split(',')
-        completed_files = str(row[4]).split(',')
-        created_at = row[5]
-        updated_at = row[6]
-        progress = math.ceil(len(completed_files)/len(files))
-        job = ingestion_job.IngestionJob(job_id=job_id, status=status, reason=reason,
-                                         files=files, completed_files=completed_files, 
-                                         created_at=created_at, updated_at=updated_at,
-                                           progress=progress)
-        jobs.append(job)
+        jobs.append(_map_row_to_job(row))
 
     return jobs
+
+
+def get_job_details(job_id: str) -> Optional[ingestion_job.IngestionJob]:
+    """Returns details about a job."""
+    cursor = CONN.cursor()
+    cursor.execute('''
+    SELECT 
+        id, status, reason, files, completedFiles, created_at, updated_at, progress
+        FROM IngestionJobs
+        WHERE id = ?
+    ''', (job_id,))
+    row = cursor.fetchone()
+    if row:
+        return _map_row_to_job(row)
+    return None
+
+
+def _map_row_to_job(row: any) -> ingestion_job.IngestionJob:
+    job_id = row[0]
+    status = ingestion_job.JobStatus.from_string(status=row[1])
+    reason = row[2]
+    files = str(row[3]).split(',')
+    completed_files = str(row[4]).split(',')
+    created_at = row[5]
+    updated_at = row[6]
+    progress = row[7]
+    job = ingestion_job.IngestionJob(
+        job_id=job_id, status=status, reason=reason,
+        files=files, completed_files=completed_files,
+        created_at=created_at, updated_at=updated_at,
+        progress=progress)
+    return job

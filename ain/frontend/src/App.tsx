@@ -4,6 +4,7 @@ import "./components/explorer/index";
 import Explorer from "./components/explorer/index";
 import SideNavBar from "./components/navbar";
 import Search from "./components/search";
+import Jobs from "./components/jobs";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Search></Search>}></Route>
             <Route path="/explorer" element={<Explorer></Explorer>}></Route>
+            <Route path="/jobs" element={<Jobs></Jobs>}></Route>
           </Routes>
         </div>
       </div>

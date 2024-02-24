@@ -11,7 +11,7 @@ from whoosh.qparser import QueryParser
 from watchdog.events import FileSystemEventHandler, FileSystemEvent, FileCreatedEvent
 from watchdog.observers import Observer
 from watchdog.observers.api import BaseObserver
-from ain.db.db_operation import get_file_path, update_job_progress
+from ain.db.db_operation import get_file_path, update_job_progress, update_job_status
 from ain.engine.search_results import SearchItem, SearchResult
 from ain.models import ingestion_job as ij
 
@@ -58,13 +58,13 @@ class Engine(FileSystemEventHandler):
 
     def __init__(self, index_dir: str, src_dir: str,
                  job_task_q: 'Queue[tuple[str, str, str]]') -> None:
-        self._schema = Schema(path=ID(stored=True), content=TEXT)
+        self._schema = Schema(file_path=ID(stored=True),
+                              page_number=ID(stored=True), content=TEXT)
         if not exists_in(index_dir):
             self._ix = create_in(index_dir, self._schema)
         else:
             self._ix = open_dir("my_search_index", schema=self._schema)
         self._src_dir = src_dir
-        self._job_task_q = job_task_q
         # A dictionary with job_id as key and dict. The other dict is
         # file path as key for total pages and page.
         self._job_cache: 'dict[str, ij.IngestionJob]' = {}
@@ -90,6 +90,68 @@ class Engine(FileSystemEventHandler):
         if txt_path.endswith(".txt"):
             self._index(txt_path)
 
+    def _index(self, src_path: str) -> None:
+        """Indexes the content of extracted PDF."""
+        print("Indexing data...")
+        with _Writer(self._ix) as writer:
+            start_a = time.time()
+            with open(src_path, "r", encoding="utf-8") as f:
+                content = f.read()
+                start = time.time()
+                file_path, file_name, page_number, total_pages, job_id, pdf_count = self._extract_details_from_path(
+                    path=src_path)
+                writer.add_document(file_path=file_path,
+                                    page_number=page_number, content=content)
+                print("---> indexed in", time.time() - start, "seconds")
+                if job_id not in self._job_cache:
+                    self._job_cache[job_id] = ij.IngestionJob(
+                        job_id=job_id,
+                        status=ij.JobStatus.IN_PROGRESS,
+                        files=[],
+                        completed_files=[],
+                        reason="",
+                        progress=0)
+                    self._job_cache[job_id].set_doc_count(int(pdf_count))
+                    print("Marking job as in progress", job_id)
+                    update_job_status(
+                        job_id, ij.JobStatus.IN_PROGRESS, reason="")
+
+                self._job_cache[job_id].add_file_page_count(
+                    file_path=file_path, page_count=total_pages)
+                print("from src path", file_path, file_name,
+                      page_number, total_pages, job_id)
+                is_done = self._job_cache[job_id].processed_file(
+                    file_path=file_path, page_number=page_number)
+
+                if int(page_number) % 10 == 0:
+                    update_job_progress(
+                        job_id=job_id,
+                        completed_files=self._job_cache[job_id].completed_files,
+                        progress=self._job_cache[job_id].get_progress)
+                if is_done:
+                    update_job_progress(
+                        job_id=job_id,
+                        completed_files=self._job_cache[job_id].completed_files,
+                        progress=100)
+                job = self._job_cache[job_id]
+                if job.is_done():
+                    update_job_status(job_id, ij.JobStatus.SUCCESS, "")
+                    del self._job_cache[job_id]
+
+            os.remove(src_path)
+            print("---> total process in", time.time() - start_a,
+                  "seconds and doc count", self._ix.doc_count())
+
+    def _job_id_for_file(self, file_name: str) -> str:
+        if len(self._job_cache) == 0:
+            return ""
+        for job_id, job in self._job_cache.items():
+            print("check if job has file")
+            if job.has_file(file_name=file_name):
+                print("found job id", job_id)
+                return job_id
+        return ""
+
     def find_results(self, search_text: str) -> SearchResult:
         """Finds results from the index."""
         search_result: SearchResult = SearchResult()
@@ -98,13 +160,8 @@ class Engine(FileSystemEventHandler):
             results = searcher.search(query, limit=None)
             for hit in results:
                 # path is the path along with page number.
-                path = hit['path']
-                path_without_extension = os.path.splitext(
-                    os.path.basename(path))[0]
-                page_no_file_name = path_without_extension.split('#')
-                page_number = page_no_file_name[0]
-                file_name = page_no_file_name[1]
-                file_path = get_file_path(file_name)
+                file_path = hit['file_path']
+                page_number = hit['page_number']
                 # print(file_path)
                 if file_path is None:
                     return []
@@ -119,40 +176,18 @@ class Engine(FileSystemEventHandler):
                     )
         return search_result
 
-    def _index(self, src_path: str) -> None:
-        """Indexes the content of extracted PDF."""
-        print("Indexing data...")
-        with _Writer(self._ix) as writer:
-            start_a = time.time()
-            with open(src_path, "r", encoding="utf-8") as f:
-                content = f.read()
-                start = time.time()
-                writer.add_document(path=src_path, content=content)
-                print("---> indexed in", time.time() - start, "seconds")
-            while True:
-                job_id, file_path, total_pages, page_number = self._job_task_q.get_nowait()
-                if not file_path:
-                    break
-                ingestion_job = self._job_cache.get(job_id)
-                if ingestion_job is None:
-                    self._job_cache[job_id] = ij.IngestionJob(
-                        job_id=job_id,
-                        status=ij.JobStatus.IN_PROGRESS,
-                        files=[],
-                        completed_files=[],
-                        reason="",
-                        progress=0)
-                is_done = self._job_cache[job_id].processed_file(
-                    file_path,
-                    page_number, total_pages)
-                if is_done:
-                    update_job_progress(
-                        job_id=job_id,
-                        completed_files=self._job_cache[job_id].completed_files)
-
-            os.remove(src_path)
-            print("---> total process in", time.time() - start_a,
-                  "seconds and doc count", self._ix.doc_count())
+    def _extract_details_from_path(self, path: str) -> 'tuple[str, str, str, str, str, str]':
+        # <pdf_name>#<page_number>#<total_pages>#<job_id>#<pdf_count>.txt
+        path_without_extension = os.path.splitext(
+            os.path.basename(path))[0]
+        page_no_file_name = path_without_extension.split('#')
+        file_name = page_no_file_name[0]
+        page_number = page_no_file_name[1]
+        total_pages = page_no_file_name[2]
+        job_id = page_no_file_name[3]
+        pdf_count = page_no_file_name[4]
+        file_path = get_file_path(file_name)
+        return file_path, file_name, page_number, total_pages, job_id, pdf_count
 
 
 class _Writer():

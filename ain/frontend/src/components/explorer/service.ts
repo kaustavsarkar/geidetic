@@ -58,4 +58,34 @@ export default class ExplorerService {
     }
     return;
   };
+
+  /**
+   * Fetches the path if a pdf with same name was parsed.
+   * @param pdfName name of the pdf
+   * @returns path of the pdf previously parsed
+   */
+  getFilePath = async (pdfName: string): Promise<string> => {
+    if (isLocal) {
+      await sleep(2000);
+      return "random_path";
+    }
+    try {
+      const response = await fetch("http://localhost:5000/pdfpath", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ pdfName: pdfName }),
+      });
+
+      if (response.ok) {
+        return (await response.json())["path"];
+      }
+    } catch (e) {
+      // Handle the error.
+    }
+    return "";
+  };
 }
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
