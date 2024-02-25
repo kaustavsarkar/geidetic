@@ -169,14 +169,14 @@ function Explorer() {
               size="lg"
               icon={<PlayIcon />}
               color="violet"
-              disabled={fileListState?.fileList.selectedFiles?.length === 0}
+              disabled={fileListState?.fileList?.selectedFiles?.length === 0}
             >
               Memorise
             </IconButton>
           </FlexboxGrid>
         </Row>
         <Divider />
-        {fileListState?.fileList.files && (
+        {fileListState?.fileList?.files && (
           <Row>
             <FlexboxGrid justify="center">
               <FlexboxGrid.Item colspan={22}>
