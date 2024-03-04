@@ -3,7 +3,7 @@ darkdetect==0.8.0
 Flask==3.0.1
 packaging==23.2
 Pillow==10.1.0
-pkg_resources==0.0.0
+# pkg_resources==0.0.0
 proxy_tools==0.1.0
 PyMuPDF==1.23.5
 PyMuPDFb==1.23.5
@@ -17,5 +17,5 @@ QtPy==2.4.1
 typing_extensions==4.9.0
 watchdog==3.0.0
 Whoosh==2.7.4
-pyinstaller; sys_platform != 'darwin'
+pyinstaller==6.4.0; sys_platform != 'darwin'
 py2app; sys_platform == 'darwin'

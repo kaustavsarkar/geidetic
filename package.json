@@ -7,7 +7,7 @@
     "dev": "bunx --bun vite",
     "frontend:dev": "tsc && vite build",
     "frontend:prod": "tsc && vite build",
-    "build": "bun run frontend:prod",
+    "build": "bun run frontend:prod && run-script-os",
     "build:macos": "./.venv/bin/python3 build-macos.py py2app",
     "build:windows": ".\\.venv\\Scripts\\pyinstaller build-windows.spec",
     "build:linux": "./.venv/bin/pyinstaller build-linux.spec --onefile",
