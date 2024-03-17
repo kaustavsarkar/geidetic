@@ -5,6 +5,7 @@ import re
 from multiprocessing import Process, Queue
 import fitz
 from ain.db.db_operation import insert_file_mapping, insert_new_job
+from ain.logs.ain_logs import logger
 
 
 def find_pdfs_in(folder_path: str) -> List[str]:
@@ -61,5 +62,5 @@ def _save(pdf_paths: Sequence[str]):
                     text_file_name = f'{pdf_name}#{str(i + 1)}#{len(pdf_document)}#{job_id}#{total_files}.txt'
                     save_to_text_file(pdf_text, text_file_name)
         except Exception as e:
-            print("empty file", file_path, e)
+            logger.warning("empty file", file_path, e)
             # print(get_job_details(job_id).to_dict)

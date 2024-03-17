@@ -13,6 +13,7 @@ from watchdog.observers.api import BaseObserver
 from ain.db.db_operation import get_file_path, update_job_progress, update_job_status, get_job_details
 from ain.engine.search_results import SearchItem, SearchResult
 from ain.models import ingestion_job as ij
+from ain.logs.ain_logs import logger
 
 
 _INDEX_DIR = "my_search_index"
@@ -39,7 +40,7 @@ def start_engine() -> 'tuple[Engine,BaseObserver]':
     observer.schedule(event_handler=search_engine,
                       path=path, recursive=False)
     observer.start()
-    print("observer started")
+    logger.info("observer started")
     return search_engine, observer
 
 
@@ -82,7 +83,7 @@ class Engine(FileSystemEventHandler):
     def _commit(self):
         if self._writer is None:
             return
-        print("done commit")
+        logger.debug("done commit")
         self._writer.commit()
 
     def on_created(self, event: FileSystemEvent) -> None:
@@ -94,12 +95,12 @@ class Engine(FileSystemEventHandler):
         # print("on_created triggered", event)
         if event.is_directory:
             # There should be directory changes involved here.
-            print("event is a directory")
+            logger.debug("event is a directory")
             return
 
         if not isinstance(event, FileCreatedEvent):
             # The event should be a file creation event
-            print("not a file creation event")
+            logger.debug("not a file creation event")
             return
         txt_path: str = event.src_path
         # print(txt_path)
@@ -128,8 +129,8 @@ class Engine(FileSystemEventHandler):
             if job_id not in self._job_cache:
                 job = get_job_details(job_id=job_id)
                 self._job_cache[job_id] = job
-                print("getting job details", job)
-                print("Marking job as in progress", job_id)
+                logger.debug("getting job details", job)
+                logger.debug("Marking job as in progress", job_id)
                 update_job_status(
                     job_id, ij.JobStatus.IN_PROGRESS, reason="")
 
@@ -157,7 +158,7 @@ class Engine(FileSystemEventHandler):
                 self._commit()
                 idx_time = str(timedelta(seconds=self._indexing_time))
                 db_time = str(timedelta(seconds=self._db_time))
-                print("job is done. Indexing Time",
+                logger.info("job is done. Indexing Time",
                       idx_time, "db time", db_time)
         os.remove(src_path)
         db_time = time.time() - start_a - index_time
@@ -170,9 +171,9 @@ class Engine(FileSystemEventHandler):
         if len(self._job_cache) == 0:
             return ""
         for job_id, job in self._job_cache.items():
-            print("check if job has file")
+            logger.debug("check if job has file")
             if job.has_file(file_name=file_name):
-                print("found job id", job_id)
+                logger.debug("found job id", job_id)
                 return job_id
         return ""
 
@@ -212,6 +213,11 @@ class Engine(FileSystemEventHandler):
         pdf_count = page_no_file_name[4]
         file_path = get_file_path(file_name)
         return file_path, file_name, page_number, total_pages, job_id, pdf_count
+    
+    def close(self):
+        self._writer.cancel()
+        self._writer.close()
+        self._ix.close()
 
 
 class _Writer():

@@ -1,6 +1,7 @@
 """Contains models pertaining to ingestion job."""
 from enum import Enum
 from datetime import datetime
+from ain.logs.ain_logs import logger
 
 
 class JobStatus(Enum):
@@ -79,7 +80,7 @@ class IngestionJob():
 
     def has_file(self, file_name: str) -> bool:
         """Check if a file exists in a job."""
-        print(self.files, file_name)
+        logger.debug(self.files, file_name)
         return file_name in self.files
 
     def is_done(self) -> bool:

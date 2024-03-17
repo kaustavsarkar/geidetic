@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime, timedelta
 from sqlite3 import Connection
 from ain.models import directory, ingestion_job
+from ain.logs.ain_logs import logger
 
 # Create a new SQLite database (or connect to an existing one)
 
@@ -136,7 +137,7 @@ def update_job_status(job_id: str, status: ingestion_job.JobStatus, reason: 'Opt
 
 def update_job_progress(job_id: str, completed_files: 'list[str]', progress: float):
     """Updates job progress."""
-    # print("updating job progress", job_id, progress)
+    logger.debug("updating job progress", job_id, progress)
     cursor = CONN.cursor()
     files = ','.join(completed_files)
     now = datetime.now()
@@ -207,7 +208,7 @@ JOIN file_mapping fm ON ij.files LIKE '%' || fm.file_name || '%'
 GROUP BY ij.id;
                    ''')
     for row in cursor:
-        print("for job id:", row[0], "total pages:", row[1], "in time:", str(timedelta(
+        logger.debug("for job id:", row[0], "total pages:", row[1], "in time:", str(timedelta(
             seconds=row[2])))
 
 

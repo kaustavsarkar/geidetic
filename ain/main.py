@@ -1,4 +1,5 @@
 """Main class to launch the application."""
+import multiprocessing
 import os
 import re
 import threading
@@ -10,6 +11,7 @@ from ain.db.db_operation import create_tables
 from ain.fileio import reader
 from ain.models import ingestion_job
 from ain.db import db_operation as db
+from ain.logs.ain_logs import logger
 
 FAV_ICON = 'favicon.ico'
 path = os.path.join(os.getcwd(), 'ain', 'assets', FAV_ICON)
@@ -40,9 +42,9 @@ def index_pdfs():
 def search_text():
     """Searches text in the database."""
     text = request.get_json()['searchString']
-    print(text)
+    logger.info('search string', text)
     results = search_engine.find_results(text)
-    print(results)
+    logger.info('Results for search', results)
     return results.to_json(), 200
 
 
@@ -72,7 +74,7 @@ def list_jobs():
 
     for job in jobs:
         response.append(job.to_dict)
-    print(response)
+    logger.info('list job response length', len(response))
     return {'jobs': response}, 200
 
 
@@ -113,7 +115,7 @@ def after_request(response):
 def get_entrypoint():
     """Returns path of the generated html."""
     def exists(html_path):
-        print('checking index.html in ', os.path.join(
+        logger.info('checking index.html in ', os.path.join(
             os.path.dirname(__file__), html_path))
         return os.path.exists(os.path.join(os.path.dirname(__file__), html_path))
 
@@ -136,14 +138,49 @@ def start_server():
     """Starts the application server."""
     app.run()
 
+def on_closing():
+    logger.info('closing ain.')
+    try:
+        logger.info('closing observer.')
+        if observer.is_alive():
+            observer.stop()
+            observer.join()
+    except Exception as e:
+        logger.error('Exception while closing file Observer', e)
+    finally:
+        logger.info('Oberserver closed.')
+
+    try:
+        logger.info('Closing indexer.')
+        search_engine.close()
+    except Exception as e:
+        logger.error('Exception while closing the search engine', e)
+    finally:
+        logger.info('Indexer closed.')
+
+    try:    
+        logger.info('closing daemon.')
+        if daemon.is_alive():
+            daemon.join(timeout=1)
+    except Exception as e:
+        logger.error('Exception while closing daemon', e)
+    finally:
+        logger.info('closed daemon.')
+
 
 if __name__ == '__main__':
-    t = threading.Thread(target=start_server)
-    t.daemon = True
-    t.start()
+    logger.info('inside init')
+    multiprocessing.freeze_support()
+    daemon = threading.Thread(target=start_server)
+    daemon.daemon = True
+    daemon.start()
+    logger.info('started daemon thread.')
 
+    logger.info('init engine')
     init_engine()
     create_tables()
     search_engine, observer = start_engine()
     window = webview.create_window('ain', url=ENTRY, server=app)
+    window.events.closing += on_closing
+    logger.info('start webview.')
     webview.start(debug=True)
