@@ -3,10 +3,11 @@
 block_cipher = None
 
 added_files = [
-    ('.\\gui', 'gui'),
+    ('.\\ain\\assets', 'assets'),
+    ('.\\ain\\frontend\\dist', 'frontend/dist')
 ]
 
-a = Analysis(['.\\index.py'],
+a = Analysis(['.\\ain\\main.py'],
              pathex=['.\\dist'],
              binaries=None,
              datas=added_files,
@@ -22,7 +23,7 @@ exe = EXE(pyz,
           name='ain',
           debug=False,
           strip=True,
-          icon='.\\assets\\favicon.ico',
+          icon='.\\ain\\assets\\favicon.ico',
           upx=True,
           console=False ) # set this to see error output of the executable
 coll = COLLECT(exe,
