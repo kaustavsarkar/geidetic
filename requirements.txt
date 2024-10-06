@@ -1,5 +1,6 @@
 bottle==0.12.25
 darkdetect==0.8.0
+# cefpython3==66.0; sys_platform != 'darwin'
 Flask==3.0.1
 packaging==23.2
 Pillow==10.1.0
@@ -18,4 +19,6 @@ typing_extensions==4.9.0
 watchdog==3.0.0
 Whoosh==2.7.4
 pyinstaller==6.4.0; sys_platform != 'darwin'
+clr-loader==0.2.6; sys_platform != 'darwin'  
+pythonnet==3.0.3; sys_platform != 'darwin'
 py2app; sys_platform == 'darwin'

@@ -9,3 +9,5 @@ my_search_index/
 pdf_extracted_data/
 node_modules/
 dist/
+build/
+*.log

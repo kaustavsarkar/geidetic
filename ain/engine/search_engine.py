@@ -13,7 +13,7 @@ from watchdog.observers.api import BaseObserver
 from ain.db.db_operation import get_file_path, update_job_progress, update_job_status, get_job_details
 from ain.engine.search_results import SearchItem, SearchResult
 from ain.models import ingestion_job as ij
-from ain.logs.ain_logs import logger
+from ain.logs import logger
 
 
 _INDEX_DIR = "my_search_index"
@@ -129,8 +129,8 @@ class Engine(FileSystemEventHandler):
             if job_id not in self._job_cache:
                 job = get_job_details(job_id=job_id)
                 self._job_cache[job_id] = job
-                logger.debug("getting job details", job)
-                logger.debug("Marking job as in progress", job_id)
+                logger.debug("getting job details job: %s", job)
+                logger.debug("Marking job as in progress jobId: %s", job_id)
                 update_job_status(
                     job_id, ij.JobStatus.IN_PROGRESS, reason="")
 
@@ -158,8 +158,8 @@ class Engine(FileSystemEventHandler):
                 self._commit()
                 idx_time = str(timedelta(seconds=self._indexing_time))
                 db_time = str(timedelta(seconds=self._db_time))
-                logger.info("job is done. Indexing Time",
-                      idx_time, "db time", db_time)
+                logger.info(
+                    "job is done. Indexing Time: %s, db time: %s", idx_time, db_time)
         os.remove(src_path)
         db_time = time.time() - start_a - index_time
         self._indexing_time = self._indexing_time + index_time
@@ -173,7 +173,7 @@ class Engine(FileSystemEventHandler):
         for job_id, job in self._job_cache.items():
             logger.debug("check if job has file")
             if job.has_file(file_name=file_name):
-                logger.debug("found job id", job_id)
+                logger.debug("found job id: %s", job_id)
                 return job_id
         return ""
 
@@ -213,7 +213,7 @@ class Engine(FileSystemEventHandler):
         pdf_count = page_no_file_name[4]
         file_path = get_file_path(file_name)
         return file_path, file_name, page_number, total_pages, job_id, pdf_count
-    
+
     def close(self):
         self._writer.cancel()
         self._writer.close()

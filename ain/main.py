@@ -11,7 +11,7 @@ from ain.db.db_operation import create_tables
 from ain.fileio import reader
 from ain.models import ingestion_job
 from ain.db import db_operation as db
-from ain.logs.ain_logs import logger
+from ain.logs import logger
 
 FAV_ICON = 'favicon.ico'
 path = os.path.join(os.getcwd(), 'ain', 'assets', FAV_ICON)
@@ -42,9 +42,9 @@ def index_pdfs():
 def search_text():
     """Searches text in the database."""
     text = request.get_json()['searchString']
-    logger.info('search string', text)
+    logger.info('search string %s', text)
     results = search_engine.find_results(text)
-    logger.info('Results for search', results)
+    logger.info('Results for search %s', results)
     return results.to_json(), 200
 
 
@@ -74,7 +74,7 @@ def list_jobs():
 
     for job in jobs:
         response.append(job.to_dict)
-    logger.info('list job response length', len(response))
+    logger.info('list job response length %s', len(response))
     return {'jobs': response}, 200
 
 
@@ -115,7 +115,7 @@ def after_request(response):
 def get_entrypoint():
     """Returns path of the generated html."""
     def exists(html_path):
-        logger.info('checking index.html in ', os.path.join(
+        logger.info('checking index.html in %s', os.path.join(
             os.path.dirname(__file__), html_path))
         return os.path.exists(os.path.join(os.path.dirname(__file__), html_path))
 
@@ -146,7 +146,7 @@ def on_closing():
             observer.stop()
             observer.join()
     except Exception as e:
-        logger.error('Exception while closing file Observer', e)
+        logger.error('Exception while closing file Observer %s', e)
     finally:
         logger.info('Oberserver closed.')
 
@@ -154,7 +154,7 @@ def on_closing():
         logger.info('Closing indexer.')
         search_engine.close()
     except Exception as e:
-        logger.error('Exception while closing the search engine', e)
+        logger.error('Exception while closing the search engine %s', e)
     finally:
         logger.info('Indexer closed.')
 
@@ -163,7 +163,7 @@ def on_closing():
         if daemon.is_alive():
             daemon.join(timeout=1)
     except Exception as e:
-        logger.error('Exception while closing daemon', e)
+        logger.error('Exception while closing daemon %s', e)
     finally:
         logger.info('closed daemon.')
 

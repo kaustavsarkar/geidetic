@@ -1,7 +1,7 @@
 """Contains models pertaining to ingestion job."""
 from enum import Enum
 from datetime import datetime
-from ain.logs.ain_logs import logger
+from ain.logs import logger
 
 
 class JobStatus(Enum):
