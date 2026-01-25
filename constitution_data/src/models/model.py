@@ -139,3 +139,22 @@ class Part:
     # Some Parts contain Articles directly without Chapters
     articles: list[Article] = field(default_factory=list)
     amendments: list[Amendment] = field(default_factory=list)
+
+@dataclass
+class VectorResult:
+    """Holds the result of an embedding operation."""
+    rank: int
+    text: str
+    doc_type: str
+    canonical_id: str
+    article: Optional[str] = None
+    clause: Optional[str] = None
+    sub_clause: Optional[str] = None
+    similarity_score: Optional[float] = None
+    court: Optional[str] = None
+    citation: Optional[str] = None
+    source_page: Optional[int] = None
+    source_file: Optional[str] = None
+    schedule: Optional[str] = None
+    entry: Optional[str] = None
+    amendment: Optional[str] = None

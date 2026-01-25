@@ -1,8 +1,30 @@
 import os
 from typing import Optional, Tuple
+from sentence_transformers import SentenceTransformer
 
 import torch
 from llama_cpp import Llama
+
+_EMBEDDING_MODEL: Optional[SentenceTransformer] = None
+
+def get_embedding_model(model_name: str, local_models_dir: str = "local_models") -> SentenceTransformer:
+    global _EMBEDDING_MODEL
+    if _EMBEDDING_MODEL is None:
+        # Determine the absolute path for local models
+        # Assuming local_models is sibling to src/
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        save_path = os.path.join(base_dir, local_models_dir, model_name.replace("/", "--"))
+
+        if os.path.exists(save_path):
+            print(f"Loading embedding model from local path: {save_path}")
+            _EMBEDDING_MODEL = SentenceTransformer(save_path)
+        else:
+            print(f"Downloading embedding model: {model_name}...")
+            _EMBEDDING_MODEL = SentenceTransformer(model_name)
+            print(f"Saving embedding model to: {save_path}")
+            _EMBEDDING_MODEL.save(save_path)
+            
+    return _EMBEDDING_MODEL
 
 def load_model_with_cache(model_id: str, local_dir: str, device: str) -> Tuple[Optional[object], object]:
     """
